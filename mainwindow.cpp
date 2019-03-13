@@ -29,7 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-
+    delete _camera_helper;
+    delete _central_wid;
 }
 
 void MainWindow::windowSizeChanged(int w, int h)
@@ -76,7 +77,12 @@ CentralWidget::CentralWidget(QWidget *parent)
 }
 
 CentralWidget::~CentralWidget()
-{}
+{
+    delete _camera_list;
+    delete _layout;
+    delete _video_render;
+    delete _menu_region;
+}
 
 QList<QString> CentralWidget::cameraList()
 {

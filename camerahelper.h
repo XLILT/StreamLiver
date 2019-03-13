@@ -3,6 +3,7 @@
 
 #include "dshowcapture.hpp"
 #include "videorender.h"
+#include "videoencoder.h"
 
 #include <QObject>
 #include <QList>
@@ -21,9 +22,13 @@ public:
 
 public:
     explicit CameraHelper(VideoRender *render, QObject *parent = nullptr);
+    virtual ~CameraHelper();
 
 public:
     void syncCameraList();
+
+    void on_video_data(const DShow::VideoConfig &config, unsigned char *data,
+                             size_t size, long long startTime, long long stopTime);
 
 signals:
     void changeCameraList(QList<QString> camera_list);
@@ -39,6 +44,11 @@ private:
     DShow::Device * _ds_dev = nullptr;
 
     VideoRender * _render = nullptr;
+
+    bool _encoder_inited = false;
+    VideoEncoder * _encoder = nullptr;
+
+    int64_t _frame_seq = 0;
 };
 
 #endif // CAMERAHELPER_H

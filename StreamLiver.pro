@@ -27,12 +27,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     camerahelper.cpp \
-    videorender.cpp
+    videorender.cpp \
+    videoencoder.cpp
 
 HEADERS += \
         mainwindow.h \
     camerahelper.h \
-    videorender.h
+    videorender.h \
+    videoencoder.h
 
 DISTFILES +=
 
@@ -44,3 +46,11 @@ LIBS += C:\workspace\c++\obs-studio\plugins\win-dshow\libdshowcapture\build\Debu
 
 INCLUDEPATH += C:\workspace\c++\SDL\SDL2-devel-2.0.9-VC\SDL2-2.0.9\include
 LIBS += C:\workspace\c++\SDL\SDL2-devel-2.0.9-VC\SDL2-2.0.9\lib\x64\SDL2.lib
+
+INCLUDEPATH += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\include
+LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\avcodec.lib
+LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\avdevice.lib
+LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\avformat.lib
+LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\avformat.lib
+LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\avutil.lib
+LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\swscale.lib

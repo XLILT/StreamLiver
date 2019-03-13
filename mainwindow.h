@@ -18,7 +18,7 @@ class CentralWidget : public QWidget
 
 public:
     CentralWidget(QWidget *parent = 0);
-    ~CentralWidget();
+    virtual ~CentralWidget();
 
     VideoRender * video_render()
     {

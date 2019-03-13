@@ -27,6 +27,13 @@ VideoRender::VideoRender(QWidget *parent) : QWidget(parent)
     _sdl_screen = SDL_CreateWindowFrom((const void *)(winId()));
 }
 
+VideoRender::~VideoRender()
+{
+    SDL_DestroyTexture(_sdl_texture);
+    SDL_DestroyRenderer(_sdl_renderer);
+    SDL_DestroyWindow(_sdl_screen);
+}
+
 void VideoRender::on_pkt(const DShow::VideoConfig &config, unsigned char *data,
                          size_t size, long long startTime, long long stopTime)
 {
@@ -41,6 +48,10 @@ void VideoRender::on_pkt(const DShow::VideoConfig &config, unsigned char *data,
 
         _sdl_renderer = SDL_CreateRenderer(_sdl_screen, -1, SDL_RENDERER_SOFTWARE);
         _sdl_texture = SDL_CreateTexture(_sdl_renderer, pixformat, SDL_TEXTUREACCESS_STREAMING, _width, _height);
+
+        (void)size;
+        (void)startTime;
+        (void)stopTime;
     }
 
     SDL_Rect sdl_rect;

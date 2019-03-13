@@ -14,6 +14,7 @@ class VideoRender : public QWidget
     Q_OBJECT
 public:
     explicit VideoRender(QWidget *parent = nullptr);
+    virtual ~VideoRender();
 
 public:
 //    void bindWindow();
