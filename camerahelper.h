@@ -32,10 +32,12 @@ public:
 
 signals:
     void changeCameraList(QList<QString> camera_list);
+    void setStreamUrl(QString url);
 
 public slots:
     void cameraSelected(QString camera);
     void liveBegined();
+    void streamUrlGot(QString url);
 
 private:
     QMap<QString, CameraInfo> _all_camera_info_map = {};

@@ -30,6 +30,7 @@ public:
 public slots:
     void cameraSelected(QString camera);
     void liveBegined();
+    void streamUrlGot(QString url);
 
     void cameraListChanged(QList<QString> cam_list);
 
@@ -38,6 +39,7 @@ public slots:
 signals:
     void selectCamera(QString camera);
     void beginLive();
+    void setStreamUrl(QString url);
 
     void changeCameraList();
 

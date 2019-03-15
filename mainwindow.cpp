@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(_central_wid, SIGNAL(selectCamera(QString)), _camera_helper, SLOT(cameraSelected(QString)));
     connect(_central_wid, SIGNAL(beginLive()), _camera_helper, SLOT(liveBegined()));
+    connect(_central_wid, SIGNAL(setStreamUrl(QString)), _camera_helper, SLOT(streamUrlGot(QString)));
 
     _camera_helper->syncCameraList();
 
@@ -71,6 +72,7 @@ CentralWidget::CentralWidget(QWidget *parent)
 
         connect(obj_root, SIGNAL(selectCamera(QString)), this, SLOT(cameraSelected(QString)));
         connect(obj_root, SIGNAL(beginLive()), this, SLOT(liveBegined()));
+        connect(obj_root, SIGNAL(setStreamUrl(QString)), this, SLOT(streamUrlGot(QString)));
     }
 
     _menu_region->rootContext()->setContextProperty("central_widget", this);
@@ -132,3 +134,8 @@ void CentralWidget::videoSizeGot(int w, int h)
 
 //    video_render()->bindWindow();
 //}
+
+void CentralWidget::streamUrlGot(QString url)
+{
+    emit setStreamUrl(url);
+}

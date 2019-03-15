@@ -24,19 +24,57 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp \
     camerahelper.cpp \
-    videorender.cpp \
-    videoencoder.cpp
+    main.cpp \
+    mainwindow.cpp \
+    videoencoder.cpp \
+    videorender.cpp \    
+    liver.cpp \
+    librtmp/amf.c \
+    librtmp/cencode.c \
+    librtmp/hashswf.c \
+    librtmp/log.c \
+    librtmp/md5.c \
+    librtmp/parseurl.c \
+    librtmp/platform.c \
+    librtmp/rtmp.c \
+    flv-mux.c \
+    bmem.c \
+    base.c \
+    array-serializer.c
 
 HEADERS += \
-        mainwindow.h \
+    mainwindow.h \
     camerahelper.h \
     videorender.h \
-    videoencoder.h
+    videoencoder.h \
+    liver.h \    
+    librtmp/amf.h \
+    librtmp/bytes.h \
+    librtmp/c99defs.h \
+    librtmp/cencode.h \
+    librtmp/dh.h \
+    librtmp/dhgroups.h \
+    librtmp/handshake.h \
+    librtmp/http.h \
+    librtmp/log.h \
+    librtmp/md5.h \
+    librtmp/platform.h \
+    librtmp/rtmp.h \
+    librtmp/rtmp_sys.h \
+    flv-mux.h \
+    rtmp-helpers.h \
+    array-serializer.h \
+    darray.h \
+    serializer.h \
+    c99defs.h \
+    bmem.h \
+    base.h \
+    common_def.h \
+    metadata_def.h \
+    serialize_buf.h
 
-DISTFILES +=
+# DISTFILES += \
 
 RESOURCES += \
     qml.qrc
@@ -54,3 +92,10 @@ LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\avformat.lib
 LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\avformat.lib
 LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\avutil.lib
 LIBS += C:\workspace\c++\ffmpeg\ffmpeg-4.1.1-win64-dev\lib\swscale.lib
+
+INCLUDEPATH += C:\workspace\openssl\openssl-1.0.2r\inc32
+LIBS += C:\workspace\openssl\openssl-1.0.2r\out32dll\libeay32.lib
+LIBS += C:\workspace\openssl\openssl-1.0.2r\out32dll\ssleay32.lib
+
+INCLUDEPATH += C:\workspace\thirdparty\zlib\zlib-1.2.11
+LIBS += C:\workspace\thirdparty\zlib\zlib-1.2.11\zlib1.lib

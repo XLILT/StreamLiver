@@ -33,6 +33,7 @@ CameraHelper::CameraHelper(VideoRender *render, QObject *parent) : QObject(paren
     _render(render),
     _encoder(new ::VideoEncoder)
 {
+    connect(this, SIGNAL(setStreamUrl(QString)), _encoder, SLOT(streamUrlGot(QString)));
 }
 
 CameraHelper::~CameraHelper()
@@ -111,4 +112,9 @@ void CameraHelper::on_video_data(const DShow::VideoConfig &config, unsigned char
     _encoder->on_frame(data, (int)size, _frame_seq++);
 
     // ++_frame_seq;
+}
+
+void CameraHelper::streamUrlGot(QString url)
+{
+    emit setStreamUrl(url);
 }

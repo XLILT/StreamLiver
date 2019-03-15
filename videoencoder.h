@@ -1,6 +1,8 @@
 ﻿#ifndef VIDEOENCODER_H
 #define VIDEOENCODER_H
 
+#include "liver.h"
+
 #include <QObject>
 
 extern "C" {
@@ -23,8 +25,10 @@ private:
     int scale_frame(uint8_t * in_data, int in_linesize);
 
 signals:
+    void setStreamUrl(QString url);
 
 public slots:
+    void streamUrlGot(QString url);
 
 private:
     AVCodec * _codec = nullptr;
@@ -33,6 +37,8 @@ private:
     AVPacket * _pkt = nullptr;
     AVPixelFormat _raw_pix_fmt = AV_PIX_FMT_NONE;
     SwsContext * _sws_context = nullptr;
+
+    Liver * _liver = nullptr;
 };
 
 #endif // VIDEOENCODER_H

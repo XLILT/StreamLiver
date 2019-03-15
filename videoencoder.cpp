@@ -1,7 +1,10 @@
 ﻿#pragma warning (disable:4819)
 
 #include "videoencoder.h"
+#include "common_def.h"
+#include "metadata_def.h"
 
+// #include <future>
 #include <QDebug>
 #include <QFile>
 
@@ -14,22 +17,26 @@ extern "C" {
 }
 
 // QFile a_file("./a.h264");
-AVOutputFormat *ofmt = NULL;
-AVFormatContext *ofmt_ctx = NULL;
-AVStream *out_stream = NULL;
-const char * out_filename = "foo.flv";
+//AVOutputFormat *ofmt = NULL;
+//AVFormatContext *ofmt_ctx = NULL;
+//AVStream *out_stream = NULL;
+//const char * out_filename = "foo.flv";
 // const char * out_filename = "foo1.mp4";
 // const char * out_filename = "foo2.mkv";
 
-VideoEncoder::VideoEncoder(QObject *parent) : QObject(parent)
+VideoEncoder::VideoEncoder(QObject *parent) : QObject(parent),
+    _liver(new Liver(this))
 {
     av_log_set_level(AV_LOG_DEBUG);
 
-    _codec = avcodec_find_encoder_by_name("h264");
-    _codectx = avcodec_alloc_context3(_codec);
-    _pkt = av_packet_alloc();
+    // _codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    // _codectx = avcodec_alloc_context3(_codec);
+    // _pkt = av_packet_alloc();
 
+    // qDebug() << _codec << " " << _codectx;
     // a_file.open(QIODevice::ReadWrite);
+
+    connect(this, SIGNAL(setStreamUrl(QString)), _liver, SLOT(streamUrlGot(QString)));
 }
 
 VideoEncoder::~VideoEncoder()
@@ -37,35 +44,35 @@ VideoEncoder::~VideoEncoder()
     qDebug() << "destruct";
 
     //写文件尾
-    if(ofmt_ctx)
-    {
-        av_write_trailer(ofmt_ctx);
+//    if(ofmt_ctx)
+//    {
+//        av_write_trailer(ofmt_ctx);
 
-        avcodec_free_context(&_codectx);
+//        avcodec_free_context(&_codectx);
 
-        if(_frame)
-        {
-            av_frame_free(&_frame);
-        }
+//        if(_frame)
+//        {
+//            av_frame_free(&_frame);
+//        }
 
-        if(_pkt)
-        {
-            av_packet_free(&_pkt);
-        }
+//        if(_pkt)
+//        {
+//            av_packet_free(&_pkt);
+//        }
 
-        if(_sws_context)
-        {
-            sws_freeContext(_sws_context);
-        }
+//        if(_sws_context)
+//        {
+//            sws_freeContext(_sws_context);
+//        }
 
-        //Close input
-        if(!(ofmt->flags & AVFMT_NOFILE))
-        {
-            avio_closep(&(ofmt_ctx->pb));
-        }
+//        //Close input
+//        if(!(ofmt->flags & AVFMT_NOFILE))
+//        {
+//            avio_closep(&(ofmt_ctx->pb));
+//        }
 
-        avformat_free_context(ofmt_ctx);
-    }
+//        avformat_free_context(ofmt_ctx);
+//    }
 
 }
 
@@ -97,6 +104,7 @@ bool VideoEncoder::init(int w, int h, AVPixelFormat fmt, int fps)
 //    }
 
 
+    _codectx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     /* put sample parameters */
     _codectx->bit_rate = 400000;
@@ -125,13 +133,6 @@ bool VideoEncoder::init(int w, int h, AVPixelFormat fmt, int fps)
         av_opt_set(_codectx->priv_data, "preset", "slow", 0);
     }
 
-    _pkt = av_packet_alloc();
-    if(!_pkt)
-    {
-        qDebug() << "pkt is null";
-        return false;
-    }
-
     /* open it */
     int ret = avcodec_open2(_codectx, _codec, NULL);
     if (ret < 0)
@@ -142,6 +143,31 @@ bool VideoEncoder::init(int w, int h, AVPixelFormat fmt, int fps)
        qDebug() << "Could not open codec: " << errbuf;
        return false;
     }
+
+    MetaData metadata;
+
+    metadata.width = _codectx->width;
+    metadata.height = _codectx->height;
+    metadata.fps = _codectx->framerate.num;
+    metadata.video_bitrate = _codectx->bit_rate;
+
+    bool liver_init_ret = _liver->init(_codectx->extradata, _codectx->extradata_size, std::move(metadata));
+    if(!liver_init_ret)
+    {
+        return false;
+    }
+
+//    std::async([this]{
+//        bool liver_init_ret = _liver->init(_codectx->extradata, _codectx->extradata_size);
+//        qDebug() << "liver init ret:" << liver_init_ret;
+//    });
+
+    _pkt = av_packet_alloc();
+    if(!_pkt)
+    {
+        qDebug() << "pkt is null";
+        return false;
+    }    
 
     _frame = av_frame_alloc();
     if (!_frame)
@@ -181,83 +207,83 @@ bool VideoEncoder::init(int w, int h, AVPixelFormat fmt, int fps)
     }
 
     //打开输出流
-    ret = avformat_alloc_output_context2(&ofmt_ctx, NULL, NULL, out_filename);
-    if (ret < 0)
-    {
-       char errbuf[1024] = {0};
-       av_make_error_string(errbuf, sizeof errbuf, ret);
+//    ret = avformat_alloc_output_context2(&ofmt_ctx, NULL, NULL, out_filename);
+//    if (ret < 0)
+//    {
+//       char errbuf[1024] = {0};
+//       av_make_error_string(errbuf, sizeof errbuf, ret);
 
-       qDebug() << "avformat_alloc_output_context2 failed: " << errbuf;
+//       qDebug() << "avformat_alloc_output_context2 failed: " << errbuf;
 
-       return true;
-    }
+//       return true;
+//    }
 
-    out_stream = avformat_new_stream(ofmt_ctx, _codec);
-    if(!out_stream)
-    {
-        qDebug() << "Failed allocating output stream";
+//    out_stream = avformat_new_stream(ofmt_ctx, _codec);
+//    if(!out_stream)
+//    {
+//        qDebug() << "Failed allocating output stream";
 
-        return true;
-    }
+//        return true;
+//    }
 
-    qDebug() << "nb_streams: " << ofmt_ctx->nb_streams;
+//    qDebug() << "nb_streams: " << ofmt_ctx->nb_streams;
 
-    out_stream->id = ofmt_ctx->nb_streams - 1;
-    out_stream->time_base = _codectx->time_base;
+//    out_stream->id = ofmt_ctx->nb_streams - 1;
+//    out_stream->time_base = _codectx->time_base;
 
-    AVCodecParameters avcp;
+//    AVCodecParameters avcp;
 
-    ret = avcodec_parameters_from_context(&avcp, _codectx);
-    if (ret < 0)
-    {
-       char errbuf[1024] = {0};
-       av_make_error_string(errbuf, sizeof errbuf, ret);
+//    ret = avcodec_parameters_from_context(&avcp, _codectx);
+//    if (ret < 0)
+//    {
+//       char errbuf[1024] = {0};
+//       av_make_error_string(errbuf, sizeof errbuf, ret);
 
-       qDebug() << "avcodec_parameters_from_context failed: " << errbuf;
+//       qDebug() << "avcodec_parameters_from_context failed: " << errbuf;
 
-       return true;
-    }
+//       return true;
+//    }
 
-    ret = avcodec_parameters_to_context(out_stream->codec, &avcp);
-    if (ret < 0)
-    {
-       char errbuf[1024] = {0};
-       av_make_error_string(errbuf, sizeof errbuf, ret);
+//    ret = avcodec_parameters_to_context(out_stream->codec, &avcp);
+//    if (ret < 0)
+//    {
+//       char errbuf[1024] = {0};
+//       av_make_error_string(errbuf, sizeof errbuf, ret);
 
-       qDebug() << "avcodec_parameters_to_context failed: " << errbuf;
+//       qDebug() << "avcodec_parameters_to_context failed: " << errbuf;
 
-       return true;
-    }
+//       return true;
+//    }
 
-    ofmt = ofmt_ctx->oformat;
+//    ofmt = ofmt_ctx->oformat;
 
-    if(ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
-    {
-        out_stream->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    }
+//    if(ofmt_ctx->oformat->flags & AVFMT_GLOBALHEADER)
+//    {
+//        out_stream->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+//    }
 
     // av_dump_format(ofmt_ctx, 0, "foo.flv", 1);
 
     //打开输出文件
-    if(!(ofmt->flags & AVFMT_NOFILE))
-    {
-        ret = avio_open(&ofmt_ctx->pb,out_filename,AVIO_FLAG_WRITE);
-        if(ret<0)
-        {
-            qDebug() << "Could not open output URL " << out_filename;
+//    if(!(ofmt->flags & AVFMT_NOFILE))
+//    {
+//        ret = avio_open(&ofmt_ctx->pb,out_filename,AVIO_FLAG_WRITE);
+//        if(ret<0)
+//        {
+//            qDebug() << "Could not open output URL " << out_filename;
 
-            return true;
-        }
-    }
+//            return true;
+//        }
+//    }
 
     //写文件头到输出文件
-    ret = avformat_write_header(ofmt_ctx,NULL);
-    if(ret < 0)
-    {
-        qDebug() << "Error occured when opening output URL";
+//    ret = avformat_write_header(ofmt_ctx,NULL);
+//    if(ret < 0)
+//    {
+//        qDebug() << "Error occured when opening output URL";
 
-        return true;
-    }
+//        return true;
+//    }
 
    qDebug() << "encoder init over";
 
@@ -285,6 +311,7 @@ void VideoEncoder::on_frame(uint8_t * data, int linesize, int64_t pts)
 //    _frame->data[0] = data;
 //    _frame->linesize[0] = linesize;
     _frame->pts = pts;
+    _frame->key_frame = 1;
 
     int ret = avcodec_send_frame(_codectx, _frame);
     if (ret < 0)
@@ -306,23 +333,23 @@ void VideoEncoder::on_frame(uint8_t * data, int linesize, int64_t pts)
             return;
         }
 
-        qDebug() << "1packet encoded (dts=" << _pkt->dts << ")(pts=" << _pkt->pts << ")(size=" << _pkt->size << ")";
+        // qDebug() << "1packet encoded (dts=" << _pkt->dts << ")(pts=" << _pkt->pts << ")(size=" << _pkt->size << ")";
 
-        av_packet_rescale_ts(_pkt, _codectx->time_base, out_stream->time_base);
+        // av_packet_rescale_ts(_pkt, _codectx->time_base, out_stream->time_base);
 
-        qDebug() << "2packet encoded (dts=" << _pkt->dts << ")(pts=" << _pkt->pts << ")(size=" << _pkt->size << ")";
+        // qDebug() << "2packet encoded (dts=" << _pkt->dts << ")(pts=" << _pkt->pts << ")(size=" << _pkt->size << ")";
 
         // a_file.write((char *)_pkt->data, _pkt->size);
 
         //将包数据写入到文件。
-        int write_ret = av_interleaved_write_frame(ofmt_ctx, _pkt);
-        if(write_ret < 0)
-        {
-            /**
-            当网络有问题时，容易出现到达包的先后不一致，pts时序混乱会导致
-            av_interleaved_write_frame函数报 -22 错误。暂时先丢弃这些迟来的帧吧
-            若所大部分包都没有pts时序，那就要看情况自己补上时序（比如较前一帧时序+1）再写入。
-            */
+//        int write_ret = av_interleaved_write_frame(ofmt_ctx, _pkt);
+//        if(write_ret < 0)
+//        {
+//            /**
+//            当网络有问题时，容易出现到达包的先后不一致，pts时序混乱会导致
+//            av_interleaved_write_frame函数报 -22 错误。暂时先丢弃这些迟来的帧吧
+//            若所大部分包都没有pts时序，那就要看情况自己补上时序（比如较前一帧时序+1）再写入。
+//            */
 //            if(ret == -22)
 //            {
 //                qDebug() << "av_interleaved_write_frame return 22";
@@ -333,11 +360,23 @@ void VideoEncoder::on_frame(uint8_t * data, int linesize, int64_t pts)
 //                break;
 //            }
 
-            char errbuf[1024] = {0};
-            av_make_error_string(errbuf, sizeof errbuf, write_ret);
+//            char errbuf[1024] = {0};
+//            av_make_error_string(errbuf, sizeof errbuf, write_ret);
 
-            qDebug() << "av_interleaved_write_frame failed: " << errbuf;
-        }
+//            qDebug() << "av_interleaved_write_frame failed: " << errbuf;
+//        }
+
+        encoder_packet enc_pkt;
+
+        enc_pkt.data = _pkt->data;
+        enc_pkt.size = _pkt->size;
+        enc_pkt.dts = _pkt->dts;
+        enc_pkt.pts = _pkt->pts;
+        enc_pkt.timebase_den = _codectx->time_base.den;
+        enc_pkt.type = OBS_ENCODER_VIDEO;
+        enc_pkt.keyframe = _frame->key_frame;
+
+        _liver->on_stream_data(std::move(enc_pkt));
 
         av_packet_unref(_pkt);
     }
@@ -357,4 +396,9 @@ int VideoEncoder::scale_frame(uint8_t * in_data, int in_linesize)
     (void)in_linesize;
 
     return ret;
+}
+
+void VideoEncoder::streamUrlGot(QString url)
+{
+    emit setStreamUrl(url);
 }

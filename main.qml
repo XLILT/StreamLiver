@@ -11,10 +11,11 @@ Column {
     // 发送给 Qt Widgets 的信号
     signal selectCamera(string camera)
     signal beginLive
+    signal setStreamUrl(string url)
     // 从 Qt Widgets 接收到的信号
     signal cameraListChanged
 
-    spacing: 2
+    spacing: 10
 
     Row {
         // id: camera_area
@@ -24,7 +25,7 @@ Column {
             id: camera_des
             text: qsTr("选择摄像头:")
             font.pointSize: 16
-            // anchors.centerIn: parent            
+            // anchors.centerIn: parent
         }
 
         ComboBox {
@@ -38,6 +39,26 @@ Column {
             }
 
             onActivated: selectCamera(currentText)
+        }
+    }
+
+    Row {
+        spacing: 2
+
+        Text {
+            // id:stream_des
+            text: qsTr("输入流地址:")
+            font.pointSize: 18
+            // anchors.centerIn: parent
+        }
+
+        TextField {
+            placeholderText: qsTr("流地址")
+            width: 300
+            height: 30
+            selectByMouse: true
+
+            onEditingFinished: setStreamUrl(displayText)
         }
     }
 
